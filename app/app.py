@@ -16,6 +16,7 @@ template=r'''<?xml version="1.0" encoding="utf-8" standalone="no"?>
             font-family: monospace;
             font-weight: bold;
             font-size: {font_size};
+            white-space: pre;
         }}
     </style>
     <defs>
