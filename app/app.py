@@ -32,13 +32,12 @@ template=r'''<?xml version="1.0" encoding="utf-8" standalone="no"?>
 '''
 
 
-def str2svg(str, font_size, line_length):
-    print(str, font_size, line_length)
+def str2svg_elements(str, font_size, line_length):
     lines = justify(str, line_length)
-    return '\n'.join(
+    return [
         f'<text y="{(i + 1) * font_size}px" class="line">{ln}</text>'
         for i, ln in enumerate(lines)
-    )
+    ]
 
 
 @app.route('/epic/<string>')
@@ -47,14 +46,13 @@ def epic(string):
     font_size = 24 if 'font_size' not in args else int(args['font_size'])
     line_length = 18 if 'line_length' not in args else int(args['line_length'])
     width = 271 if 'width' not in args else int(args['width'])
-    height = 150 if 'height' not in args else int(args['height'])
 
-    svg_text = str2svg(string, font_size, line_length)
+    lines = str2svg_elements(string, font_size, line_length)
     svg = template.format(
         width=width,
-        height=height,
+        height=(len(lines) + 1) * font_size,
         font_size=f'{font_size}px',
-        shapes=svg_text,
+        shapes='\n'.join(lines),
     )
     return Response(svg, mimetype='image/svg+xml')
 
