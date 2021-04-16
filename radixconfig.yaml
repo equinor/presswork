@@ -1,0 +1,20 @@
+apiVersion: radix.equinor.com/v1
+kind: RadixApplication
+metadata:
+  name: presswork
+spec:
+  environments:
+    - name: dev
+      build:
+        from: main
+  components:
+    - name: server
+      src: "."
+      public: true
+      ports:
+       - name: http
+         port: 5000
+      publicPort: http
+  dnsAppAlias:
+    environment: dev
+    component: server

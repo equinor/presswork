@@ -1,11 +1,9 @@
-FROM debian:latest
+FROM python:3
 
-RUN apt update
-RUN apt install -y python3 python3-pip
 RUN python3 -m pip install JustifyText
 RUN python3 -m pip install flask
 
-VOLUME /app
+ADD app /app
 WORKDIR /app
 
 ENTRYPOINT ["python3"]
