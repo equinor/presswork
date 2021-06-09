@@ -2,6 +2,10 @@ from flask import Flask
 from flask import Response
 from flask import request
 from justifytext import justify
+import hyphen
+import hyphen.textwrap2
+import io
+import json
 
 
 app = Flask(__name__)
@@ -20,11 +24,7 @@ template=r'''<?xml version="1.0" encoding="utf-8" standalone="no"?>
         }}
     </style>
     <defs>
-        <linearGradient id="Color" gradientTransform="rotate(65)" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#8A2387" />
-            <stop offset="50%" stop-color="#E94057" />
-            <stop offset="100%" stop-color="#F27121" />
-        </linearGradient>
+        {gradient}
     </defs>
     <g fill="url(#Color)">
         {shapes}
@@ -33,8 +33,40 @@ template=r'''<?xml version="1.0" encoding="utf-8" standalone="no"?>
 '''
 
 
+def gradient2svg(gradient):
+    svg_file = io.StringIO()
+    print('<linearGradient id="Color" gradientTransform="rotate(65)"'
+          ' gradientUnits="userSpaceOnUse">',
+          file=svg_file)
+    for i, color in enumerate(gradient):
+        percentage = i * 100 / (len(gradient) - 1)
+        print(f'<stop offset="{percentage}%" stop-color="{color}" />',
+              file=svg_file)
+    print('</linearGradient>', file=svg_file)
+    svg_file.seek(0)
+    return svg_file.read()
+
+
+with open('gradients.json') as f:
+    gradients = json.load(f)
+    gradients = [gradient2svg(grad["colors"]) for grad in gradients]
+
+
+def select_gradient(str):
+    return gradients[hash(str) % len(gradients)]
+
+
+def hypenize(str, line_length, hyphenator=hyphen.Hyphenator('en_US')):
+    return hyphen.textwrap2.fill(
+        str,
+        width=line_length,
+        use_hyphenator=hyphenator,
+    )
+
+
 def str2svg_elements(str, font_size, line_length):
-    lines = justify(str, line_length)
+    hyphenized = hypenize(str, line_length)
+    lines = justify(hyphenized, line_length)
     return [
         f'<text y="{(i + 1) * font_size}px" class="line">{ln}</text>'
         for i, ln in enumerate(lines)
@@ -49,10 +81,12 @@ def epic(string):
     width = 271 if 'width' not in args else int(args['width'])
 
     lines = str2svg_elements(string, font_size, line_length)
+    gradient = select_gradient(string)
     svg = template.format(
         width=width,
         height=(len(lines) + 1) * font_size,
         font_size=f'{font_size}px',
+        gradient=gradient,
         shapes='\n'.join(lines),
     )
     return Response(svg, mimetype='image/svg+xml')
