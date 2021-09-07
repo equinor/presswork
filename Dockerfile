@@ -7,7 +7,7 @@ RUN python3 -m pip install flask
 ADD app /app
 WORKDIR /app
 
-RUN adduser --system --uid 1000 --group presswork presswork
+RUN adduser --system --uid 1000 --group presswork
 USER 1000
 
 ENTRYPOINT ["python3"]
